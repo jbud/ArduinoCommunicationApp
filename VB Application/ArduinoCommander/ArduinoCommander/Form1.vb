@@ -82,7 +82,7 @@ Public Class Form1
 	End Sub
 
 	Sub SendCommand(ByVal command As String)
-		Dim response As String
+		'Dim response As String
 		Try
 			myComPort.WriteLine(command)
 			'response = myComPort.ReadLine
