@@ -1,35 +1,37 @@
 ﻿Option Explicit On
-Option Strict On
+
 Imports System.IO.Ports
 Public Class Form1
 	Dim myComPort As New SerialPort
 	Dim time As Integer
 	Dim sleeping As Boolean
+    Private CommonDialog1 As Object
 
-	Sub init()
+    Sub init()
 
-		Dim bitRates(9) As Integer
-		Dim nameArray() As String
+        Dim bitRates(9) As Integer
+        Dim nameArray() As String
 
         ' Find the COM ports on the system.
 
         nameArray = SerialPort.GetPortNames
-		Array.Sort(nameArray)
+        Array.Sort(nameArray)
 
         ' Fill a combo box with the port names.
 
         cmbPorts.DataSource = nameArray
-		cmbPorts.DropDownStyle = ComboBoxStyle.DropDownList
+        cmbPorts.DropDownStyle = ComboBoxStyle.DropDownList
 
         ' Select a default port.
 
         cmbPorts.SelectedIndex = 1
-		time = 0
-		Timer1.Start()
-		Diagnostics.Debug.WriteLine("Initialized...")
+        time = 0
+        Timer1.Start()
+        Diagnostics.Debug.WriteLine("Initialized...")
 
-	End Sub
-	Sub OpenComPort()
+    End Sub
+
+    Sub OpenComPort()
 		Try
 			If Not myComPort.IsOpen Then
 				myComPort.PortName = cmbPorts.SelectedItem.ToString	' Get the selected COM port from the combo box.
@@ -37,15 +39,18 @@ Public Class Form1
 				myComPort.BaudRate = 9600 'default for Arduino, please set your arduino back to 9600 if not already set.
 
                 ' Set other port parameters.
+                myComPort.DataBits = 8
                 myComPort.Parity = Parity.None
-				myComPort.DataBits = 8
-				myComPort.StopBits = StopBits.One
-				myComPort.Handshake = Handshake.None
-				myComPort.ReadTimeout = 3000
-				myComPort.WriteTimeout = 5000
+                myComPort.StopBits = StopBits.One
+                myComPort.Handshake = Handshake.None
+                myComPort.Encoding = System.Text.Encoding.Default
+                myComPort.ReadTimeout = 10000
+                myComPort.WriteTimeout = 5000
+                myComPort.RtsEnable = True
+                myComPort.DtrEnable = True
 
 
-				myComPort.Open() ' Open the port.
+                myComPort.Open() ' Open the port.
 				sleeping = False
 				Diagnostics.Debug.WriteLine("Connection Established")
 			End If
@@ -82,14 +87,15 @@ Public Class Form1
 	End Sub
 
 	Sub SendCommand(ByVal command As String)
-		'Dim response As String
-		Try
-			myComPort.WriteLine(command)
-			'response = myComPort.ReadLine
+
+        Try
+            myComPort.WriteLine(command)
+
+            Diagnostics.Debug.WriteLine("Sent Command: " + command)
 
 
 
-		Catch ex As TimeoutException
+        Catch ex As TimeoutException
 			MessageBox.Show(ex.Message)
 		Catch ex As InvalidOperationException
 			MessageBox.Show(ex.Message)
@@ -135,12 +141,24 @@ Public Class Form1
 		SendCommand("B")
 	End Sub
 
-	Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
-		unsleep()
-		SendCommand("D")
-	End Sub
+    Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
+        unsleep()
+        SendCommand("D")
+    End Sub
 
-	Private Sub sleep()
+    Private Sub colorchange(ByVal c As Color)
+        Dim cc As String
+
+        cc = String.Format("{0:X2}{1:X2}{2:X2}",
+                     c.R,
+                     c.G,
+                     c.B)
+        unsleep()
+        SendCommand("RGB " + cc)
+
+        Diagnostics.Debug.WriteLine("Color: " + cc)
+    End Sub
+    Private Sub sleep()
 		If sleeping = False Then
 			CloseComPort()
 			sleeping = True
@@ -159,13 +177,34 @@ Public Class Form1
 		End If
 	End Sub
 
-	Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
-		time = time + 1
-		Diagnostics.Debug.WriteLine("Timer: {0}", time)
-		If time > 30 Then ' if the idle timer is longer than 30 seconds, initiate sleep.
-			sleep()
-			time = 0
+    Private Sub Timer1_Tick(sender As Object, e As EventArgs) Handles Timer1.Tick
+        time = time + 1
+        Dim Incoming As String
+        ' Diagnostics.Debug.WriteLine("Timer: {0}", time)
+        Try
+            Incoming = myComPort.ReadExisting()
+            If Incoming Is Nothing Then
+                Diagnostics.Debug.WriteLine("nothing" + vbCrLf)
+            Else
+                Diagnostics.Debug.WriteLine(Incoming)
+            End If
+        Catch ex As TimeoutException
+            Diagnostics.Debug.WriteLine("Error: Serial Port read timed out.")
+        End Try
+        If time > 30 Then ' if the idle timer is longer than 30 seconds, initiate sleep.
+            sleep()
+            Diagnostics.Debug.WriteLine("sleep mode")
+            time = 0
 			sleeping = True
 		End If
 	End Sub
+
+    Private Sub Button1_Click_1(sender As Object, e As EventArgs) Handles Button1.Click
+        Dim cDialog As New ColorDialog()
+        cDialog.Color = Color.Red
+
+        If (cDialog.ShowDialog() = DialogResult.OK) Then
+            colorchange(cDialog.Color)
+        End If
+    End Sub
 End Class

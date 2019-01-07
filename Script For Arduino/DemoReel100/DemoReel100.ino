@@ -14,20 +14,38 @@ FASTLED_USING_NAMESPACE
 //#define CLK_PIN   4
 #define LED_TYPE    TM1803
 #define COLOR_ORDER GBR
-#define NUM_LEDS    10
+#define NUM_LEDS    20
 CRGB leds[NUM_LEDS];
 
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
 
-byte incomingByte;
-uint16_t gCurrentBrightness = 96;
 
+// COOLING: How much does the air cool as it rises?
+// Less cooling = taller flames.  More cooling = shorter flames.
+// Default 50, suggested range 20-100 
+#define COOLING  55
+
+// SPARKING: What chance (out of 255) is there that a new spark will be lit?
+// Higher chance = more roaring fire.  Lower chance = more flickery fire.
+// Default 120, suggested range 50-200.
+#define SPARKING 120
+
+char incomingString[50];
+char hh[6];
+String incomingStr;
+char ccc[50];
+uint16_t gCurrentBrightness = 255;
+unsigned long hexo = 0x0;
+unsigned long hexor = 0x0;
 void setup() {
   delay(3000); // 3 second delay for recovery
   
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, 0, 10).setCorrection(TypicalLEDStrip);
+  
+  //FastLED.addLeds<LED_TYPE,DATA_PIN,RBG>(leds, NUM_LEDS, NUM_LEDS).setCorrection(TypicalLEDStrip);
   //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
   // set master brightness control
@@ -39,7 +57,7 @@ void setup() {
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, juggle, bpm };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, juggle, bpm, fire, clr };
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
@@ -47,45 +65,54 @@ uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 bool on = true;
 bool cycle = false;
 
+
+
+
 void loop()
 {
+    random16_add_entropy( random());
     if (Serial.available() > 0) {
-       incomingByte = Serial.read();
-       if (incomingByte == '*') {
+       incomingStr = Serial.readString();
+       incomingStr.toCharArray(incomingString,50);
+       returnSignal(incomingString);
+       if (incomingString[0]== '*') {
          nextPattern();
        } 
-       if (incomingByte == '-') {
+       if (incomingString[0] == '-') {
          if (on){
            on = false;
            FastLED.setBrightness(0);
            FastLED.show();
-           returnSignal('b'); 
+           returnSignal("b"); 
          }
          else{
            on = true;
            FastLED.setBrightness(gCurrentBrightness);
-           returnSignal('a');
+           returnSignal("a");
          } 
        }
-       if (incomingByte == '1') {
+       if (incomingString[0] == '1') {
          gCurrentPatternNumber = 0;
        }
-       if (incomingByte == '2') {
+       if (incomingString[0] == '2') {
          gCurrentPatternNumber = 1;
        }
-       if (incomingByte == '3') {
+       if (incomingString[0] == '3') {
          gCurrentPatternNumber = 2;
        }
-       if (incomingByte == '4') {
+       if (incomingString[0] == '4') {
          gCurrentPatternNumber = 3;
        }
-       if (incomingByte == '5') {
+       if (incomingString[0] == '5') {
          gCurrentPatternNumber = 4;
        }
-       if (incomingByte == '6') {
+       if (incomingString[0] == '6') {
          gCurrentPatternNumber = 5;
        }
-       if (incomingByte == 'B') {
+       if (incomingString[0] == '7') {
+         gCurrentPatternNumber = 6;
+       }
+       if (incomingString[0] == 'B') {
          gCurrentBrightness = (gCurrentBrightness + 10);
          if (gCurrentBrightness > 255)
          {
@@ -93,7 +120,7 @@ void loop()
          }
          FastLED.setBrightness(gCurrentBrightness);
        }
-       if (incomingByte == 'D') {
+       if (incomingString[0] == 'D') {
          gCurrentBrightness = (gCurrentBrightness - 10);
          if (gCurrentBrightness < 0)
          {
@@ -101,21 +128,43 @@ void loop()
          }
          FastLED.setBrightness(gCurrentBrightness);
        }
-       if (incomingByte == 'C'){
+       if (incomingString[0] == 'C'){
          
          if (cycle){
            feedbackFlash();
            feedbackFlash();
            cycle = false;
-           returnSignal('d');
+           returnSignal("d");
          }
          else{
            feedbackFlash();
            cycle = true;
-           returnSignal('c');
+           returnSignal("c");
          } 
          
        }
+       if (incomingString[0] == 'R'){
+           char n[8], m[8];
+           char *p, *q;
+           n[0] = incomingString[4];
+           n[1] = incomingString[5];
+           n[2] = incomingString[6];
+           n[3] = incomingString[7];
+           n[4] = incomingString[8];
+           n[5] = incomingString[9];
+          
+           m[0] = incomingString[6];
+           m[1] = incomingString[7];
+           m[2] = incomingString[4];
+           m[3] = incomingString[5];
+           m[4] = incomingString[8];
+           m[5] = incomingString[9];
+           returnSignal(n);
+           hexo = strtoul(n, &p, 16);
+           hexor = strtoul(m, &q, 16);
+           returnSignal2(hexo);
+           gCurrentPatternNumber = 7;
+         }
     }
     // Call the current pattern function once, updating the 'leds' array
     gPatterns[gCurrentPatternNumber]();
@@ -134,6 +183,44 @@ void loop()
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+void clr()
+{
+  for( int i = 0; i < 20; i++) {
+    leds[i]= hexo;
+  }
+  for( int i = 10; i < 20; i++) {
+    leds[i]= hexor;
+   
+  }
+  FastLED.show();
+}
+void fire()
+{
+// Array of temperature readings at each simulation cell
+  static byte heat[NUM_LEDS];
+
+  // Step 1.  Cool down every cell a little
+    for( int i = 0; i < NUM_LEDS; i++) {
+      heat[i] = qsub8( heat[i],  random8(0, ((COOLING * 10) / NUM_LEDS) + 2));
+    }
+  
+    // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+    for( int k= NUM_LEDS - 1; k >= 2; k--) {
+      heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2] ) / 3;
+    }
+    
+    // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
+    if( random8() < SPARKING ) {
+      int y = random8(7);
+      heat[y] = qadd8( heat[y], random8(160,255) );
+    }
+
+    // Step 4.  Map from heat cells to LED colors
+    for( int j = 0; j < NUM_LEDS; j++) {
+        leds[j] = HeatColor( heat[j]);
+    }
+}
 
 void nextPattern()
 {
@@ -198,10 +285,16 @@ void juggle() {
   }
 }
 
-void returnSignal(byte sig){
-  Serial.write(sig);
+void returnSignal(char* sig){
+  char out[50];
+  sprintf(out, "rcv: %s", sig);
+  Serial.write(out);
 }
-
+void returnSignal2(unsigned long sig){
+  char out[50];
+  sprintf(out, "rcv: %x", sig);
+  Serial.println(out);
+}
 void feedbackFlash() {
    FastLED.setBrightness(255);
    fill_solid(leds, NUM_LEDS, CRGB::White);
