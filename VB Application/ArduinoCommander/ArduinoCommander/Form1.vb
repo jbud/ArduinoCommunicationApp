@@ -6,14 +6,14 @@ Public Class Form1
 	Dim time As Integer
 	Dim sleeping As Boolean
     Private CommonDialog1 As Object
-
+    Dim clicked As Boolean
     Sub init()
 
         Dim bitRates(9) As Integer
         Dim nameArray() As String
 
         ' Find the COM ports on the system.
-
+        clicked = False
         nameArray = SerialPort.GetPortNames
         Array.Sort(nameArray)
 
@@ -136,15 +136,7 @@ Public Class Form1
 		SendCommand("C")
 	End Sub
 
-	Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
-		unsleep()
-		SendCommand("B")
-	End Sub
 
-    Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
-        unsleep()
-        SendCommand("D")
-    End Sub
 
     Private Sub colorchange(ByVal c As Color)
         Dim cc As String
@@ -207,4 +199,23 @@ Public Class Form1
             colorchange(cDialog.Color)
         End If
     End Sub
+
+    Private Sub TrackBar1_Scroll(sender As Object, e As EventArgs) Handles TrackBar1.Scroll
+
+    End Sub
+    Private Sub down(sender As Object, e As EventArgs) Handles TrackBar1.MouseDown
+        clicked = True
+    End Sub
+    Private Sub up(sender As Object, e As EventArgs) Handles TrackBar1.MouseUp
+        If (clicked) Then
+            Dim xx As String
+            xx = TrackBar1.Value
+            unsleep()
+            SendCommand("B " + xx)
+            clicked = False
+        End If
+
+    End Sub
+
+
 End Class

@@ -112,7 +112,7 @@ void loop()
        if (incomingString[0] == '7') {
          gCurrentPatternNumber = 6;
        }
-       if (incomingString[0] == 'B') {
+       if (incomingString[0] == 'Z') {
          gCurrentBrightness = (gCurrentBrightness + 10);
          if (gCurrentBrightness > 255)
          {
@@ -120,7 +120,7 @@ void loop()
          }
          FastLED.setBrightness(gCurrentBrightness);
        }
-       if (incomingString[0] == 'D') {
+       if (incomingString[0] == 'X') {
          gCurrentBrightness = (gCurrentBrightness - 10);
          if (gCurrentBrightness < 0)
          {
@@ -143,6 +143,16 @@ void loop()
          } 
          
        }
+       if (incomingString[0] == 'B'){
+         char nn[3];
+         uint16_t ii;
+         nn[0]=incomingString[2];
+         nn[1]=incomingString[3];
+         nn[2]=incomingString[4];
+         ii = atol(nn);
+         gCurrentBrightness = ii;
+         FastLED.setBrightness(gCurrentBrightness);
+       }
        if (incomingString[0] == 'R'){
            char n[8], m[8];
            char *p, *q;
@@ -152,7 +162,7 @@ void loop()
            n[3] = incomingString[7];
            n[4] = incomingString[8];
            n[5] = incomingString[9];
-          
+           // Rearrange bits to GGRRBB
            m[0] = incomingString[6];
            m[1] = incomingString[7];
            m[2] = incomingString[4];
@@ -191,7 +201,6 @@ void clr()
   }
   for( int i = 10; i < 20; i++) {
     leds[i]= hexor;
-   
   }
   FastLED.show();
 }
@@ -225,7 +234,7 @@ void fire()
 void nextPattern()
 {
   // add one to the current pattern number, and wrap around at the end
-  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
+  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE(gPatterns);
 }
 
 void rainbow() 
