@@ -191,7 +191,7 @@ void loop()
            
            hexo = strtoul(n, &p, 16);
            hexor = strtoul(m, &q, 16);
-           returnSignal2(hexo);
+           returnSignal(n);
            gCurrentPatternNumber = P_CLR;
          }
     }
@@ -344,6 +344,7 @@ void sendsig(uint16_t i){
 void returnSignal(char* sig){
   char out[50];
   sprintf(out, "rcv: %s", sig);
+  Serial.println(out);
 }
 void returnSignal2(unsigned long sig){
   char out[50];
