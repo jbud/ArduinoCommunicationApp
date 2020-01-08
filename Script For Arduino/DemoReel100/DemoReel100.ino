@@ -14,7 +14,7 @@ FASTLED_USING_NAMESPACE
 //#define CLK_PIN   4
 #define LED_TYPE    TM1803
 #define COLOR_ORDER GBR
-#define NUM_LEDS    20
+#define NUM_LEDS    10
 CRGB leds[NUM_LEDS];
 
 #define BRIGHTNESS          96
@@ -57,7 +57,7 @@ void setup() {
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, juggle, bpm, fire, clr };
+SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, sinelon2, sinelon3, juggle, bpm, fire, clr };
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
@@ -65,7 +65,7 @@ uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 bool on = true;
 bool cycle = false;
 
-
+int pos = 0;
 
 
 void loop()
@@ -111,6 +111,12 @@ void loop()
        }
        if (incomingString[0] == '7') {
          gCurrentPatternNumber = 6;
+       }
+       if (incomingString[0] == '8') {
+         gCurrentPatternNumber = 7;
+       }
+       if (incomingString[0] == '9') {
+         gCurrentPatternNumber = 8;
        }
        if (incomingString[0] == 'Z') {
          gCurrentBrightness = (gCurrentBrightness + 10);
@@ -185,6 +191,7 @@ void loop()
       FastLED.delay(1000/FRAMES_PER_SECOND); 
     
       // do some periodic updates
+      EVERY_N_MILLISECONDS( 60 ) { pos++; }
       EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
       if (cycle){
         EVERY_N_SECONDS( 30 ) { nextPattern(); } // change patterns periodically
@@ -264,15 +271,38 @@ void confetti()
   int pos = random16(NUM_LEDS);
   leds[pos] += CHSV( gHue + random8(64), 200, 255);
 }
+uint16_t snln3_i = 0;
 
+int prevpossnln3 = 0;
+
+void sinelon3(){
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int l = 8;
+  if (pos != prevpossnln3){ 
+     snln3_i++;
+     prevpossnln3 = pos;
+  }
+  if (snln3_i >= l){
+     snln3_i = 0; 
+  }
+  leds[snln3_i] += CHSV( gHue, 255, gCurrentBrightness);
+}
+void sinelon2()
+{
+  // a colored dot sweeping back and forth, with fading trails
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int pos = beatsin16(26,0,4);
+  leds[pos] += CHSV( gHue, 255, 192);
+  int pos2 = beatsin16(26,4,8);
+  leds[pos2] += CHSV( gHue, 255, 192);
+}
 void sinelon()
 {
   // a colored dot sweeping back and forth, with fading trails
   fadeToBlackBy( leds, NUM_LEDS, 20);
-  int pos = beatsin16(13,0,NUM_LEDS);
+  int pos = beatsin16(26,0,NUM_LEDS);
   leds[pos] += CHSV( gHue, 255, 192);
 }
-
 void bpm()
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
@@ -293,7 +323,11 @@ void juggle() {
     dothue += 32;
   }
 }
-
+void sendsig(uint16_t i){
+  char out[50];
+  sprintf(out, "pos: %x", i);
+  Serial.write(out); 
+}
 void returnSignal(char* sig){
   char out[50];
   sprintf(out, "rcv: %s", sig);
