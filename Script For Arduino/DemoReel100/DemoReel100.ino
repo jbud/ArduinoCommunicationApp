@@ -20,6 +20,19 @@ CRGB leds[NUM_LEDS];
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
 
+#define P_RAINBOW             0
+#define P_RAINBOWWITHGLITTER  1
+#define P_CONFETTI            2
+#define P_SINELON             3
+#define P_SINELON2            4
+#define P_SINELON3            5
+#define P_JUGGLE              6
+#define P_BPM                 7
+#define P_FIRE                8
+#define P_CLR                 9
+
+//rainbow, rainbowWithGlitter, confetti, sinelon, sinelon2, sinelon3, juggle, bpm, fire, clr
+
 
 // COOLING: How much does the air cool as it rises?
 // Less cooling = taller flames.  More cooling = shorter flames.
@@ -92,31 +105,31 @@ void loop()
          } 
        }
        if (incomingString[0] == '1') {
-         gCurrentPatternNumber = 0;
+         gCurrentPatternNumber = P_RAINBOW;
        }
        if (incomingString[0] == '2') {
-         gCurrentPatternNumber = 1;
+         gCurrentPatternNumber = P_RAINBOWWITHGLITTER;
        }
        if (incomingString[0] == '3') {
-         gCurrentPatternNumber = 2;
+         gCurrentPatternNumber = P_CONFETTI;
        }
        if (incomingString[0] == '4') {
-         gCurrentPatternNumber = 3;
+         gCurrentPatternNumber = P_SINELON;
        }
        if (incomingString[0] == '5') {
-         gCurrentPatternNumber = 4;
+         gCurrentPatternNumber = P_SINELON2;
        }
        if (incomingString[0] == '6') {
-         gCurrentPatternNumber = 5;
+         gCurrentPatternNumber = P_SINELON3;
        }
        if (incomingString[0] == '7') {
-         gCurrentPatternNumber = 6;
+         gCurrentPatternNumber = P_JUGGLE;
        }
        if (incomingString[0] == '8') {
-         gCurrentPatternNumber = 7;
+         gCurrentPatternNumber = P_BPM;
        }
        if (incomingString[0] == '9') {
-         gCurrentPatternNumber = 8;
+         gCurrentPatternNumber = P_FIRE;
        }
        if (incomingString[0] == 'Z') {
          gCurrentBrightness = (gCurrentBrightness + 10);
@@ -179,7 +192,7 @@ void loop()
            hexo = strtoul(n, &p, 16);
            hexor = strtoul(m, &q, 16);
            returnSignal2(hexo);
-           gCurrentPatternNumber = 7;
+           gCurrentPatternNumber = P_CLR;
          }
     }
     // Call the current pattern function once, updating the 'leds' array
