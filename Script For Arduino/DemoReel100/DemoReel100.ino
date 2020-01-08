@@ -188,7 +188,7 @@ void loop()
            m[3] = incomingString[5];
            m[4] = incomingString[8];
            m[5] = incomingString[9];
-           returnSignal(n);
+           
            hexo = strtoul(n, &p, 16);
            hexor = strtoul(m, &q, 16);
            returnSignal2(hexo);
@@ -344,7 +344,6 @@ void sendsig(uint16_t i){
 void returnSignal(char* sig){
   char out[50];
   sprintf(out, "rcv: %s", sig);
-  Serial.write(out);
 }
 void returnSignal2(unsigned long sig){
   char out[50];
