@@ -2,9 +2,6 @@
 
 FASTLED_USING_NAMESPACE
 
-// FastLED Demo of lighting effects with companion windows app for control.
-//
-// -Mod of DemoReel100 by Mark Kriegsman, December 2014
 
 #if FASTLED_VERSION < 3001000
 #error "Requires FastLED 3.1 or later; check github for latest code."
@@ -19,6 +16,7 @@ CRGB leds[NUM_LEDS];
 
 #define BRIGHTNESS          96
 #define FRAMES_PER_SECOND  120
+#define RAINBOW_SPEED       20
 
 #define P_RAINBOW             0
 #define P_RAINBOWWITHGLITTER  1
@@ -30,19 +28,18 @@ CRGB leds[NUM_LEDS];
 #define P_BPM                 7
 #define P_FIRE                8
 #define P_CLR                 9
-
-//rainbow, rainbowWithGlitter, confetti, sinelon, sinelon2, sinelon3, juggle, bpm, fire, clr
+#define P_KLAXON              10
 
 
 // COOLING: How much does the air cool as it rises?
 // Less cooling = taller flames.  More cooling = shorter flames.
 // Default 50, suggested range 20-100 
-#define COOLING  55
+#define COOLING  75
 
 // SPARKING: What chance (out of 255) is there that a new spark will be lit?
 // Higher chance = more roaring fire.  Lower chance = more flickery fire.
 // Default 120, suggested range 50-200.
-#define SPARKING 120
+#define SPARKING 75
 
 char incomingString[50];
 char hh[6];
@@ -56,10 +53,6 @@ void setup() {
   
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  //FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, 0, 10).setCorrection(TypicalLEDStrip);
-  
-  //FastLED.addLeds<LED_TYPE,DATA_PIN,RBG>(leds, NUM_LEDS, NUM_LEDS).setCorrection(TypicalLEDStrip);
-  //FastLED.addLeds<LED_TYPE,DATA_PIN,CLK_PIN,COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 
   // set master brightness control
   FastLED.setBrightness(BRIGHTNESS);
@@ -70,7 +63,19 @@ void setup() {
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { rainbow, rainbowWithGlitter, confetti, sinelon, sinelon2, sinelon3, juggle, bpm, fire, clr };
+SimplePatternList gPatterns = { 
+  rainbow, 
+  rainbowWithGlitter, 
+  confetti, 
+  sinelon, 
+  sinelon2, 
+  sinelon3, 
+  juggle, 
+  bpm, 
+  fire, 
+  clr, 
+  klaxon 
+};
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
@@ -131,6 +136,9 @@ void loop()
        if (incomingString[0] == '9') {
          gCurrentPatternNumber = P_FIRE;
        }
+       if (incomingString[0] == 'K') {
+         gCurrentPatternNumber = P_KLAXON;
+       }
        if (incomingString[0] == 'Z') {
          gCurrentBrightness = (gCurrentBrightness + 10);
          if (gCurrentBrightness > 255)
@@ -181,7 +189,7 @@ void loop()
            n[3] = incomingString[7];
            n[4] = incomingString[8];
            n[5] = incomingString[9];
-           // Rearrange bits to GGRRBB
+           // Rearrange bits to GGRRBB (only needed for my setup)
            m[0] = incomingString[6];
            m[1] = incomingString[7];
            m[2] = incomingString[4];
@@ -205,7 +213,7 @@ void loop()
     
       // do some periodic updates
       EVERY_N_MILLISECONDS( 60 ) { pos++; }
-      EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
+      EVERY_N_MILLISECONDS( RAINBOW_SPEED ) { gHue++; } // slowly cycle the "base color" through the rainbow
       if (cycle){
         EVERY_N_SECONDS( 30 ) { nextPattern(); } // change patterns periodically
       }
@@ -219,6 +227,7 @@ void clr()
   for( int i = 0; i < 20; i++) {
     leds[i]= hexo;
   }
+  // Render rearranged bits to GGRRBB (only needed for my setup)
   for( int i = 10; i < 20; i++) {
     leds[i]= hexor;
   }
@@ -299,6 +308,18 @@ void sinelon3(){
      snln3_i = 0; 
   }
   leds[snln3_i] += CHSV( gHue, 255, gCurrentBrightness);
+}
+void klaxon(){
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int l = 8;
+  if (pos != prevpossnln3){ 
+     snln3_i++;
+     prevpossnln3 = pos;
+  }
+  if (snln3_i >= l){
+     snln3_i = 0; 
+  }
+  leds[snln3_i] += CHSV( 0, 255, gCurrentBrightness); //red
 }
 void sinelon2()
 {

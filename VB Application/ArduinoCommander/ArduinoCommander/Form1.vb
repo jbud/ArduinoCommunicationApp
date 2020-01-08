@@ -127,8 +127,13 @@ Public Class Form1
 	Private Sub ListBox1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ListBox1.SelectedIndexChanged
 		Dim send As String
 		unsleep()
-		send = CType(ListBox1.SelectedIndex + 1, String)
-		SendCommand(send)
+        If ListBox1.SelectedIndex = 9 Then
+            send = "K"
+        Else
+            send = CType(ListBox1.SelectedIndex + 1, String)
+        End If
+
+        SendCommand(send)
 	End Sub
 
 	Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click

@@ -89,7 +89,7 @@ Partial Class Form1
         'ListBox1
         '
         Me.ListBox1.FormattingEnabled = True
-        Me.ListBox1.Items.AddRange(New Object() {"Rainbow", "Rainbow With Glitter", "Confetti", "Sinelon", "Sinelon2", "Sinelon3", "Juggle", "BPM", "Fire"})
+        Me.ListBox1.Items.AddRange(New Object() {"Rainbow", "Rainbow With Glitter", "Confetti", "Sinelon", "Sinelon2", "Sinelon3", "Juggle", "BPM", "Fire", "Klaxon"})
         Me.ListBox1.Location = New System.Drawing.Point(13, 40)
         Me.ListBox1.Name = "ListBox1"
         Me.ListBox1.Size = New System.Drawing.Size(177, 95)
