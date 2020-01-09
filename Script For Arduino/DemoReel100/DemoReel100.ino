@@ -89,6 +89,7 @@ int pos = 0;
 void loop()
 {
     random16_add_entropy( random());
+    
     if (Serial.available() > 0) {
        incomingStr = Serial.readString();
        incomingStr.toCharArray(incomingString,50);
@@ -139,22 +140,7 @@ void loop()
        if (incomingString[0] == 'K') {
          gCurrentPatternNumber = P_KLAXON;
        }
-       if (incomingString[0] == 'Z') {
-         gCurrentBrightness = (gCurrentBrightness + 10);
-         if (gCurrentBrightness > 255)
-         {
-            gCurrentBrightness = 255; 
-         }
-         FastLED.setBrightness(gCurrentBrightness);
-       }
-       if (incomingString[0] == 'X') {
-         gCurrentBrightness = (gCurrentBrightness - 10);
-         if (gCurrentBrightness < 0)
-         {
-           gCurrentBrightness = 0; 
-         }
-         FastLED.setBrightness(gCurrentBrightness);
-       }
+       
        if (incomingString[0] == 'C'){
          
          if (cycle){
@@ -173,6 +159,7 @@ void loop()
        if (incomingString[0] == 'B'){
          char nn[3];
          uint16_t ii;
+         // incomingstring = char* {B, ,2,5,5}
          nn[0]=incomingString[2];
          nn[1]=incomingString[3];
          nn[2]=incomingString[4];
@@ -183,6 +170,7 @@ void loop()
        if (incomingString[0] == 'R'){
            char n[8], m[8];
            char *p, *q;
+           // incomingString = char* {R,G,B, ,0,0,0,0,0,0}
            n[0] = incomingString[4];
            n[1] = incomingString[5];
            n[2] = incomingString[6];
@@ -205,6 +193,7 @@ void loop()
     }
     // Call the current pattern function once, updating the 'leds' array
     gPatterns[gCurrentPatternNumber]();
+    
     if (on){
       // send the 'leds' array out to the actual LED strip
       FastLED.show();  
