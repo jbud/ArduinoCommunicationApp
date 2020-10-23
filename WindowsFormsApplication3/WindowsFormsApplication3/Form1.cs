@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using NAudio.Wave;
 using NAudio.Dsp;
-using Accord;
+//using Accord;
 using System.Threading;
 namespace WindowsFormsApplication3
 {
@@ -34,7 +34,12 @@ namespace WindowsFormsApplication3
         private int twait = 10;
         private WaveInEvent waveIn = new WaveInEvent();
         public BufferedWaveProvider bwp;
-        
+        private const int minLength = 2;
+        private const int maxLength = 16384;
+        private const int minBits = 1;
+        private const int maxBits = 14;
+        private static int[][] reversedBits = new int[maxBits][];
+        private static System.Numerics.Complex[,][] complexRotation = new System.Numerics.Complex[maxBits, 2][];
 
         public Form1()
         {
@@ -288,6 +293,7 @@ namespace WindowsFormsApplication3
 
         private void timer1_Tick(object sender, EventArgs e)
         {
+            string Incoming;
             if (!zactive)
             {
                 time = time + 1;
@@ -334,7 +340,7 @@ namespace WindowsFormsApplication3
                     //System.Diagnostics.Debug.WriteLine("DataStream: " + output[0].ToString() +" ival: " +i);
                 }
             }
-            string Incoming;
+            
             // Diagnostics.Debug.WriteLine("Timer: {0}", time)
             try
             {
@@ -351,6 +357,17 @@ namespace WindowsFormsApplication3
             }
         }
 
+        /// <summary>
+        /// map integer values between a specific range of values and enforce them to remain in constraints
+        /// example: mapEnforce(21, 0, 255, 255, 0) // returns 234
+        /// example enforced: mapEnforce(300,0,255,0,1024) // returns 1024
+        /// </summary>
+        /// <param name="value">value to map</param>
+        /// <param name="fromLow">lowest value</param>
+        /// <param name="fromHigh">highest value</param>
+        /// <param name="toLow">lowest mapped value</param>
+        /// <param name="toHigh">highest mapped value</param>
+        /// <returns>int mapped value</returns>
         private static int mapEnforce(int value, int fromLow, int fromHigh, int toLow, int toHigh)
         {
             if (value > fromHigh) value = fromHigh;
@@ -428,11 +445,238 @@ namespace WindowsFormsApplication3
             System.Numerics.Complex[] fftComplex = new System.Numerics.Complex[data.Length];
             for (int i = 0; i < data.Length; i++)
                 fftComplex[i] = new System.Numerics.Complex(data[i], 0.0);
-            Accord.Math.FourierTransform.FFT(fftComplex, Accord.Math.FourierTransform.Direction.Forward);
+            aFFT(fftComplex, 1);
             for (int i = 0; i < data.Length; i++)
                 fft[i] = fftComplex[i].Magnitude;
             return fft;
         }
-        
+        public static void aFFT(System.Numerics.Complex[] data, int direction)
+        {
+            int n = data.Length;
+            int m = Log2(n);
+
+            // reorder data first
+            ReorderData(data);
+
+            // compute FFT
+            int tn = 1, tm;
+
+            for (int k = 1; k <= m; k++)
+            {
+                System.Numerics.Complex[] rotation = GetComplexRotation(k, direction);
+
+                tm = tn;
+                tn <<= 1;
+
+                for (int i = 0; i < tm; i++)
+                {
+                    System.Numerics.Complex t = rotation[i];
+
+                    for (int even = i; even < n; even += tn)
+                    {
+                        int odd = even + tm;
+                        System.Numerics.Complex ce = data[even];
+                        System.Numerics.Complex co = data[odd];
+
+                        double tr = co.Real * t.Real - co.Imaginary * t.Imaginary;
+                        double ti = co.Real * t.Imaginary + co.Imaginary * t.Real;
+
+                        data[even] += new System.Numerics.Complex(tr, ti);
+                        data[odd] = new System.Numerics.Complex(ce.Real - tr, ce.Imaginary - ti);
+                    }
+                }
+            }
+
+            if (direction == 1)
+            {
+                for (int i = 0; i < data.Length; i++)
+                    data[i] /= (double)n;
+            }
+        }
+        private static int[] GetReversedBits(int numberOfBits)
+        {
+            if ((numberOfBits < minBits) || (numberOfBits > maxBits))
+                throw new ArgumentOutOfRangeException();
+
+            // check if the array is already calculated
+            if (reversedBits[numberOfBits - 1] == null)
+            {
+                int n = Pow2(numberOfBits);
+                int[] rBits = new int[n];
+
+                // calculate the array
+                for (int i = 0; i < n; i++)
+                {
+                    int oldBits = i;
+                    int newBits = 0;
+
+                    for (int j = 0; j < numberOfBits; j++)
+                    {
+                        newBits = (newBits << 1) | (oldBits & 1);
+                        oldBits = (oldBits >> 1);
+                    }
+                    rBits[i] = newBits;
+                }
+                reversedBits[numberOfBits - 1] = rBits;
+            }
+            return reversedBits[numberOfBits - 1];
+        }
+        private static System.Numerics.Complex[] GetComplexRotation(int numberOfBits, int direction)
+        {
+            int directionIndex = (direction == 1) ? 0 : 1;
+
+            // check if the array is already calculated
+            if (complexRotation[numberOfBits - 1, directionIndex] == null)
+            {
+                int n = 1 << (numberOfBits - 1);
+                double uR = 1.0;
+                double uI = 0.0;
+                double angle = System.Math.PI / n * (int)direction;
+                double wR = System.Math.Cos(angle);
+                double wI = System.Math.Sin(angle);
+                double t;
+                System.Numerics.Complex[] rotation = new System.Numerics.Complex[n];
+
+                for (int i = 0; i < n; i++)
+                {
+                    rotation[i] = new System.Numerics.Complex(uR, uI);
+                    t = uR * wI + uI * wR;
+                    uR = uR * wR - uI * wI;
+                    uI = t;
+                }
+
+                complexRotation[numberOfBits - 1, directionIndex] = rotation;
+            }
+            return complexRotation[numberOfBits - 1, directionIndex];
+        }
+        private static void ReorderData(System.Numerics.Complex[] data)
+        {
+            int len = data.Length;
+
+            // check data length
+            if ((len < minLength) || (len > maxLength) || (!IsPowerOf2(len)))
+                throw new ArgumentException("Incorrect data length.");
+
+            int[] rBits = GetReversedBits(Log2(len));
+
+            for (int i = 0; i < len; i++)
+            {
+                int s = rBits[i];
+
+                if (s > i)
+                {
+                    System.Numerics.Complex t = data[i];
+                    data[i] = data[s];
+                    data[s] = t;
+                }
+            }
+        }
+        public static int Log2(int x)
+        {
+            if (x <= 65536)
+            {
+                if (x <= 256)
+                {
+                    if (x <= 16)
+                    {
+                        if (x <= 4)
+                        {
+                            if (x <= 2)
+                            {
+                                if (x <= 1)
+                                    return 0;
+                                return 1;
+                            }
+                            return 2;
+                        }
+                        if (x <= 8)
+                            return 3;
+                        return 4;
+                    }
+                    if (x <= 64)
+                    {
+                        if (x <= 32)
+                            return 5;
+                        return 6;
+                    }
+                    if (x <= 128)
+                        return 7;
+                    return 8;
+                }
+                if (x <= 4096)
+                {
+                    if (x <= 1024)
+                    {
+                        if (x <= 512)
+                            return 9;
+                        return 10;
+                    }
+                    if (x <= 2048)
+                        return 11;
+                    return 12;
+                }
+                if (x <= 16384)
+                {
+                    if (x <= 8192)
+                        return 13;
+                    return 14;
+                }
+                if (x <= 32768)
+                    return 15;
+                return 16;
+            }
+
+            if (x <= 16777216)
+            {
+                if (x <= 1048576)
+                {
+                    if (x <= 262144)
+                    {
+                        if (x <= 131072)
+                            return 17;
+                        return 18;
+                    }
+                    if (x <= 524288)
+                        return 19;
+                    return 20;
+                }
+                if (x <= 4194304)
+                {
+                    if (x <= 2097152)
+                        return 21;
+                    return 22;
+                }
+                if (x <= 8388608)
+                    return 23;
+                return 24;
+            }
+            if (x <= 268435456)
+            {
+                if (x <= 67108864)
+                {
+                    if (x <= 33554432)
+                        return 25;
+                    return 26;
+                }
+                if (x <= 134217728)
+                    return 27;
+                return 28;
+            }
+            if (x <= 1073741824)
+            {
+                if (x <= 536870912)
+                    return 29;
+                return 30;
+            }
+            return 31;
+        }
+        public static int Pow2(int power)
+        {
+            return ((power >= 0) && (power <= 30)) ? (1 << power) : 0;
+        }
+        public static bool IsPowerOf2(int x)
+        {
+            return (x > 0) ? ((x & (x - 1)) == 0) : false;
+        }
     }
 }
