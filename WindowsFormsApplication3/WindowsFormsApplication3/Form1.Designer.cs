@@ -79,10 +79,11 @@
             "BPM",
             "Fire",
             "Klaxon",
-            "Audio Visualizer"});
+            "Audio Visualizer",
+            "League of Legends"});
             this.listBox1.Location = new System.Drawing.Point(12, 39);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(177, 147);
+            this.listBox1.Size = new System.Drawing.Size(176, 160);
             this.listBox1.TabIndex = 2;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
@@ -143,7 +144,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(394, 197);
+            this.ClientSize = new System.Drawing.Size(392, 209);
             this.Controls.Add(this.Button2);
             this.Controls.Add(this.Button3);
             this.Controls.Add(this.Button1);
@@ -157,6 +158,7 @@
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.Text = "Arduino Commander";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.TrackBar1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
