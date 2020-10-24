@@ -40,7 +40,10 @@ namespace WindowsFormsApplication3
         private const int maxBits = 14;
         private static int[][] reversedBits = new int[maxBits][];
         private static System.Numerics.Complex[,][] complexRotation = new System.Numerics.Complex[maxBits, 2][];
-
+        private bool leagueActive = false;
+        private Class2 data = Class2.init();
+        private string curr = "1";
+        private bool off = false;
         public Form1()
         {
 
@@ -239,8 +242,14 @@ namespace WindowsFormsApplication3
 
                     
                 }
-
-                myComPort.WriteLine(command);
+                try { myComPort.WriteLine(command); }
+                catch (IOException ex)
+                {
+                    sleep();
+                    //MessageBox.Show(ex.Message);
+                    unsleep();
+                }
+                
 
                 System.Diagnostics.Debug.WriteLine("Sent Command: " + command);
             }
@@ -294,53 +303,87 @@ namespace WindowsFormsApplication3
         private void timer1_Tick(object sender, EventArgs e)
         {
             string Incoming;
-            if (!zactive)
-            {
-                time = time + 1;
+            if (leagueActive) {
+
                 
-                if (time > 30)
+                GameState g = data.gameState;
+                try {
+                    float hp = g.ActivePlayer.Stats.CurrentHealth;
+                    bool ded = g.ActivePlayer.IsDead;
+                    float maxhp = g.ActivePlayer.Stats.MaxHealth;
+                    float mana = g.ActivePlayer.Stats.ResourceValue;
+                    float maxmana = g.ActivePlayer.Stats.ResourceMax;
+                    
+                    if ((hp / maxhp) < .3 && !off)
+                    {
+
+                        if (curr != "K")
+                            SendCommand("K");
+                        curr = "K";
+                    }
+                    else if ((mana / maxmana) < .3 && !off)
+                    {
+                        if (curr != "6")
+                            SendCommand("6");
+                        curr = "6";
+                    }
+                    else
+                    {
+                        if (curr != "1")
+                            SendCommand("1");
+                        curr = "1";
+                    }
+                }catch (NullReferenceException) { }
+            }
+            else { 
+            
+                if (!zactive)
                 {
-                    sleep();
-                    System.Diagnostics.Debug.WriteLine("sleep mode");
-                    time = 0;
-                    sleeping = true;
-                }
-            } else
-            {
-                if (zsent && twait > 0)
+                    time = time + 1;
+                
+                    if (time > 30)
+                    {
+                        sleep();
+                        System.Diagnostics.Debug.WriteLine("sleep mode");
+                        time = 0;
+                        sleeping = true;
+                    }
+                } else
                 {
-                    twait--;
-                    if (twait == 0)
+                    if (zsent && twait > 0)
                     {
-                        twait = 10;
-                        zsent = false;
+                        twait--;
+                        if (twait == 0)
+                        {
+                            twait = 10;
+                            zsent = false;
+                        }
                     }
-                }
-                else
-                {
-                    double i = audioValueLast * 1000;
-                    byte[] output = new byte[1];
-                    int x = mapEnforce((int)i, 0, 255, 0, 254);
-                    output[0] = Convert.ToByte(x);
-                    try {
-                        myComPort.Write(output, 0, 1);
-                    }
-                    catch (TimeoutException ex)
+                    else
                     {
-                        MessageBox.Show(ex.Message);
+                        double i = audioValueLast * 1000;
+                        byte[] output = new byte[1];
+                        int x = mapEnforce((int)i, 0, 255, 0, 254);
+                        output[0] = Convert.ToByte(x);
+                        try {
+                            myComPort.Write(output, 0, 1);
+                        }
+                        catch (TimeoutException ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }
+                        //System.Diagnostics.Debug.WriteLine("DataStream: " + output[0].ToString() +" ival: " +i);
                     }
-                    catch (InvalidOperationException ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-                    //System.Diagnostics.Debug.WriteLine("DataStream: " + output[0].ToString() +" ival: " +i);
                 }
             }
-            
             // Diagnostics.Debug.WriteLine("Timer: {0}", time)
             try
             {
@@ -383,16 +426,22 @@ namespace WindowsFormsApplication3
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string send;
+            string send = "";
+            bool doSend = true;
             unsleep();
+            leagueActive = false;
             if (listBox1.SelectedIndex == 9)
                 send = "K";
             else if (listBox1.SelectedIndex == 10)
                 send = "Z";
+            else if (listBox1.SelectedIndex == 11) { 
+                leagueActive = true;
+                doSend = false;
+            }
             else
                 send = System.Convert.ToString(listBox1.SelectedIndex + 1);
-
-            SendCommand(send);
+            if (doSend)
+                SendCommand(send);
         }
 
         private void cmbPorts_SelectedIndexChanged(object sender, EventArgs e)
@@ -677,6 +726,11 @@ namespace WindowsFormsApplication3
         public static bool IsPowerOf2(int x)
         {
             return (x > 0) ? ((x & (x - 1)) == 0) : false;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
