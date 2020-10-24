@@ -61,7 +61,7 @@ namespace WindowsFormsApplication3
             }
             catch (WebException e)
             {
-                System.Diagnostics.Debug.WriteLine("FAIL1" +e);
+                System.Diagnostics.Debug.WriteLine("Failed to connect to active game, retrying...");
                 return false;
             }
         }

@@ -31,6 +31,7 @@ CRGB leds[NUM_LEDS];
 #define P_CLR                 9
 #define P_KLAXON              10
 #define S_AUDIO               11
+#define P_MANA                12
 
 
 // COOLING: How much does the air cool as it rises?
@@ -76,7 +77,9 @@ SimplePatternList gPatterns = {
   bpm, 
   fire, 
   clr, 
-  klaxon 
+  klaxon,
+  noop,
+  mana
 };
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
@@ -154,7 +157,9 @@ void loop()
      if (incomingString[0] == 'K') {
        gCurrentPatternNumber = P_KLAXON;
      }
-
+     if (incomingString[0] == 'M') {
+       gCurrentPatternNumber = P_MANA;
+     }
      if (incomingString[0] == 'C'){
        if (cycle){
          feedbackFlash();
@@ -263,6 +268,7 @@ void reboot() {
   while (1) {}
 }
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+void noop(){}
 byte limit(byte in) {
   if (in > 128) {
     temp = in - 127;
@@ -359,6 +365,18 @@ void sinelon3(){
      snln3_i = 0; 
   }
   leds[snln3_i] += CHSV( gHue, 255, gCurrentBrightness);
+}
+void mana(){
+  fadeToBlackBy( leds, NUM_LEDS, 10);
+  int l = 8;
+  if (pos != prevpossnln3){ 
+     snln3_i++;
+     prevpossnln3 = pos;
+  }
+  if (snln3_i >= l){
+     snln3_i = 0; 
+  }
+  leds[snln3_i] += CHSV( 160, 255, gCurrentBrightness);
 }
 void klaxon(){
   fadeToBlackBy( leds, NUM_LEDS, 10);

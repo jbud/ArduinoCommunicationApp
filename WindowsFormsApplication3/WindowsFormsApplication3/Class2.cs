@@ -17,6 +17,7 @@ namespace WindowsFormsApplication3
     {
         CancellationTokenSource masterCancelToken = new CancellationTokenSource();
         public GameState gameState = new GameState();
+        public bool active = true;
         public static Class2 init()
         {
             return new Class2();
@@ -79,8 +80,10 @@ namespace WindowsFormsApplication3
             }
             catch (WebException e)
             {
+                active = false;
                 Console.WriteLine("InvalidOperationException: Game client disconnected");
                 throw new InvalidOperationException("Couldn't connect with the game client", e);
+                
             }
 
             var gameData = JsonConvert.DeserializeObject<dynamic>(json);

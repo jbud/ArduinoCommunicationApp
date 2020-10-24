@@ -42,7 +42,7 @@ namespace WindowsFormsApplication3
         private static System.Numerics.Complex[,][] complexRotation = new System.Numerics.Complex[maxBits, 2][];
         private bool leagueActive = false;
         private Class2 data = Class2.init();
-        private string curr = "1";
+        private string curr = "0";
         private bool off = false;
         public Form1()
         {
@@ -303,29 +303,34 @@ namespace WindowsFormsApplication3
         private void timer1_Tick(object sender, EventArgs e)
         {
             string Incoming;
+            if (!data.active)
+            {
+                data = Class2.init();
+            }
             if (leagueActive) {
 
                 
                 GameState g = data.gameState;
-                try {
+                if (g.ActivePlayer != null)
+                {
                     float hp = g.ActivePlayer.Stats.CurrentHealth;
                     bool ded = g.ActivePlayer.IsDead;
                     float maxhp = g.ActivePlayer.Stats.MaxHealth;
                     float mana = g.ActivePlayer.Stats.ResourceValue;
                     float maxmana = g.ActivePlayer.Stats.ResourceMax;
-                    
-                    if ((hp / maxhp) < .3 && !off)
+                    string manat = g.ActivePlayer.Stats.ResourceType;
+                    if ((hp / maxhp) < .3)
                     {
 
                         if (curr != "K")
                             SendCommand("K");
                         curr = "K";
                     }
-                    else if ((mana / maxmana) < .3 && !off)
+                    else if ((mana / maxmana) < .3 && (manat == "MANA" || manat == "ENERGY"))
                     {
-                        if (curr != "6")
-                            SendCommand("6");
-                        curr = "6";
+                        if (curr != "M")
+                            SendCommand("M");
+                        curr = "M";
                     }
                     else
                     {
@@ -333,7 +338,15 @@ namespace WindowsFormsApplication3
                             SendCommand("1");
                         curr = "1";
                     }
-                }catch (NullReferenceException) { }
+                }
+                else
+                {
+                    //System.Diagnostics.Debug.WriteLine("null");
+                    if (curr != "1")
+                        SendCommand("1");
+                    curr = "1";
+                }
+               
             }
             else { 
             
