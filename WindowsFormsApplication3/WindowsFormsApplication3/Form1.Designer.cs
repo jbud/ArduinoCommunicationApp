@@ -39,12 +39,12 @@
             this.Button1 = new System.Windows.Forms.Button();
             this.Button3 = new System.Windows.Forms.Button();
             this.Button2 = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.TrackBar1)).BeginInit();
             this.SuspendLayout();
             // 
             // timer1
             // 
-            this.timer1.Interval = 200;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // cmbPorts
@@ -140,11 +140,23 @@
             this.Button2.UseVisualStyleBackColor = true;
             this.Button2.Click += new System.EventHandler(this.Button2_Click);
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.5F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(277, 187);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(86, 12);
+            this.label4.TabIndex = 70;
+            this.label4.Text = "©2020 Joe Jackson";
+            this.label4.Click += new System.EventHandler(this.label4_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(392, 209);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.Button2);
             this.Controls.Add(this.Button3);
             this.Controls.Add(this.Button1);
@@ -176,6 +188,7 @@
         internal System.Windows.Forms.Button Button1;
         internal System.Windows.Forms.Button Button3;
         internal System.Windows.Forms.Button Button2;
+        private System.Windows.Forms.Label label4;
     }
 }
 

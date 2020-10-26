@@ -239,9 +239,13 @@ void loop()
        
     }
     if (isData == 1) {
-      int m = map(processedData, 0, 255, 30, 150);
+      int m = map(processedData, 0, 254, 10, 255);
+      int oset = map(m, 10, 255, 2, 25);
       FastLED.setBrightness(m);
-      gHue = m + gOffset;
+      if (oset > 15){
+        oset = oset * 5; // increase rotation for higher sound.
+      }
+      gHue = oset + gOffset;
       rainbow();
       //FastLED.show();
       EVERY_N_MILLISECONDS( RAINBOW_SPEED ) {
@@ -281,14 +285,15 @@ byte limit(byte in) {
 }
 void clr()
 {
-  for( int i = 0; i < 20; i++) {
+  for( int i = 0; i < 10; i++) {
     leds[i]= hexo;
   }
   // Render rearranged bits to GGRRBB (only needed for my setup)
   for( int i = 10; i < 20; i++) {
     leds[i]= hexor;
   }
-  //FastLED.show();
+  gCurrentPatternNumber = 11;
+  //returnSignal("Working...");
 }
 void fire()
 {
@@ -319,8 +324,18 @@ void fire()
 
 void nextPattern()
 {
-  // add one to the current pattern number, and wrap around at the end
-  gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE(gPatterns);
+ 
+  int next = 0;
+  if (gCurrentPatternNumber + 1 == 11 || gCurrentPatternNumber + 1 == 12 || gCurrentPatternNumber + 1 == 9){
+    next = 0;
+    if (gCurrentPatternNumber + 1 == 9){
+      next = 10;
+    }
+  }
+  else {
+    next = gCurrentPatternNumber + 1;
+  }
+  gCurrentPatternNumber = (next) % ARRAY_SIZE(gPatterns);
 }
 
 void rainbow() 

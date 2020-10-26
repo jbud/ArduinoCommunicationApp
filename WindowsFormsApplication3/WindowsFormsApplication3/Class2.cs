@@ -41,7 +41,7 @@ namespace WindowsFormsApplication3
                         }
                         else
                         {
-                            await Task.Delay(1000);
+                            await Task.Delay(10000);
                             continue;
                         }
                     }
@@ -49,7 +49,7 @@ namespace WindowsFormsApplication3
                     {
                         // TODO: Account for League client disconnects, game ended, etc. without crashing the whole program
                         //throw new InvalidOperationException("Couldn't connect with the game client", e);
-                        await Task.Delay(1000);
+                        await Task.Delay(10000);
                         continue;
                     }
 

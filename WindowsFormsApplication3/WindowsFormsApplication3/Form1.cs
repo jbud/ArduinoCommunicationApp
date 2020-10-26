@@ -44,6 +44,7 @@ namespace WindowsFormsApplication3
         private Class2 data = Class2.init();
         private string curr = "0";
         private bool off = false;
+        private bool initialized = false;
         public Form1()
         {
 
@@ -75,6 +76,7 @@ namespace WindowsFormsApplication3
             // Select a default port.
 
             cmbPorts.SelectedIndex = 1;
+            
             time = 0;
             timer1.Start();
             System.Diagnostics.Debug.WriteLine("Initialized...");
@@ -165,6 +167,16 @@ namespace WindowsFormsApplication3
                     myComPort.Open();
                     sleeping = false;
                     System.Diagnostics.Debug.WriteLine("Connection Established");
+                    if (!initialized)
+                    {
+                        initialized = true;
+                        while (!myComPort.IsOpen) { }
+                        zactive = false;
+                        byte[] i = new byte[1];
+                        i[0] = Convert.ToByte(255);
+                        myComPort.Write(i, 0, 1);
+                        SendCommand("1");
+                    }
                 }
             }
             catch (InvalidOperationException ex)
@@ -314,7 +326,7 @@ namespace WindowsFormsApplication3
                 if (g.ActivePlayer != null)
                 {
                     float hp = g.ActivePlayer.Stats.CurrentHealth;
-                    bool ded = g.ActivePlayer.IsDead;
+                    //bool ded = g.ActivePlayer.IsDead;
                     float maxhp = g.ActivePlayer.Stats.MaxHealth;
                     float mana = g.ActivePlayer.Stats.ResourceValue;
                     float maxmana = g.ActivePlayer.Stats.ResourceMax;
@@ -742,6 +754,11 @@ namespace WindowsFormsApplication3
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label4_Click(object sender, EventArgs e)
         {
 
         }
